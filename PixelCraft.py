@@ -83,7 +83,9 @@ def download_image():
             filetypes=(("PNG Image", "*.png"), ("All Files", "*.*"))
         )
         if save_path:
-            manipulated_image.save(save_path)
+            original_width, original_height = original_image.size
+            resized_image = manipulated_image.resize((original_width*2, original_height*2), Image.LANCZOS)
+            resized_image.save(save_path)
 
 
 left_frame = tk.Frame(root, width=200, height=600, bg="white")
