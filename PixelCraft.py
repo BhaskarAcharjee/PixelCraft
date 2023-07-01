@@ -7,23 +7,24 @@ from io import BytesIO
 
 
 root = tk.Tk()
-root.geometry("1000x600") # GUI Interface size
+root.geometry("1000x600")  # GUI Interface size
 root.title("PixelCraft - A Python based Image Manipulation Tool")
 root.config(bg="white")
 
 pen_color = "black"
 pen_size = 5
 file_path = ""
+manipulated_image = None
 
 
 def add_image():
-    global file_path
-    file_path = filedialog.askopenfilename(
-        initialdir="D:\My Github Projects\PixelCraft\images")
+    global file_path, manipulated_image
+    file_path = filedialog.askopenfilename(initialdir="D:\My Github Projects\PixelCraft\images")
     image = Image.open(file_path)
     width, height = int(image.width / 2), int(image.height / 2)
     image = image.resize((width, height), Image.LANCZOS)
     canvas.config(width=image.width, height=image.height)
+    manipulated_image = image.copy()
     image = ImageTk.PhotoImage(image)
     canvas.image = image
     canvas.create_image(0, 0, image=image, anchor="nw")
@@ -51,6 +52,7 @@ def clear_canvas():
 
 
 def apply_filter(filter):
+    global manipulated_image
     image = Image.open(file_path)
     width, height = int(image.width / 2), int(image.height / 2)
     image = image.resize((width, height), Image.LANCZOS)
@@ -64,21 +66,21 @@ def apply_filter(filter):
         image = image.filter(ImageFilter.SMOOTH)
     elif filter == "Emboss":
         image = image.filter(ImageFilter.EMBOSS)
+    manipulated_image = image.copy()
     image = ImageTk.PhotoImage(image)
     canvas.image = image
     canvas.create_image(0, 0, image=image, anchor="nw")
 
 
 def download_image():
-    if file_path:
+    if manipulated_image:
         save_path = filedialog.asksaveasfilename(
-            initialdir="D:\My Github Projects\PixelCraft\images",
+            initialdir="D:\My Github Projects\PixelCraft\images\test",
             defaultextension=".png",
             filetypes=(("PNG Image", "*.png"), ("All Files", "*.*"))
         )
         if save_path:
-            image = Image.open(file_path)
-            image.save(save_path)
+            manipulated_image.save(save_path)
 
 
 left_frame = tk.Frame(root, width=200, height=600, bg="white")
@@ -87,43 +89,34 @@ left_frame.pack(side="left", fill="y")
 canvas = tk.Canvas(root, width=750, height=600)
 canvas.pack()
 
-image_button = tk.Button(left_frame, text="Add Image",
-                         command=add_image, bg="white")
+image_button = tk.Button(left_frame, text="Add Image", command=add_image, bg="white")
 image_button.pack(pady=15)
 
-color_button = tk.Button(
-    left_frame, text="Change Pen Color", command=change_color, bg="white")
+color_button = tk.Button(left_frame, text="Change Pen Color", command=change_color, bg="white")
 color_button.pack(pady=5)
 
 pen_size_frame = tk.Frame(left_frame, bg="white")
 pen_size_frame.pack(pady=5)
 
-pen_size_1 = tk.Radiobutton(
-    pen_size_frame, text="Small", value=3, command=lambda: change_size(3), bg="white")
+pen_size_1 = tk.Radiobutton(pen_size_frame, text="Small", value=3, command=lambda: change_size(3), bg="white")
 pen_size_1.pack(side="left")
 
-pen_size_2 = tk.Radiobutton(
-    pen_size_frame, text="Medium", value=5, command=lambda: change_size(5), bg="white")
+pen_size_2 = tk.Radiobutton(pen_size_frame, text="Medium", value=5, command=lambda: change_size(5), bg="white")
 pen_size_2.pack(side="left")
 pen_size_2.select()
 
-pen_size_3 = tk.Radiobutton(
-    pen_size_frame, text="Large", value=7, command=lambda: change_size(7), bg="white")
+pen_size_3 = tk.Radiobutton(pen_size_frame, text="Large", value=7, command=lambda: change_size(7), bg="white")
 pen_size_3.pack(side="left")
 
-clear_button = tk.Button(left_frame, text="Clear",
-                         command=clear_canvas, bg="#FF9797")
+clear_button = tk.Button(left_frame, text="Clear", command=clear_canvas, bg="#FF9797")
 clear_button.pack(pady=10)
 
 filter_label = tk.Label(left_frame, text="Select Filter", bg="white")
 filter_label.pack()
-filter_combobox = ttk.Combobox(left_frame, values=["Black and White", "Blur",
-                                             "Emboss", "Sharpen", "Smooth"])
+filter_combobox = ttk.Combobox(left_frame, values=["Black and White", "Blur", "Emboss", "Sharpen", "Smooth"])
 filter_combobox.pack()
 
-
-filter_combobox.bind("<<ComboboxSelected>>",
-                     lambda event: apply_filter(filter_combobox.get()))
+filter_combobox.bind("<<ComboboxSelected>>", lambda event: apply_filter(filter_combobox.get()))
 
 download_button = tk.Button(left_frame, text="Download Image", command=download_image, bg="white")
 download_button.pack(pady=10)
