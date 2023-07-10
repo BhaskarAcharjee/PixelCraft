@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import colorchooser
-from PIL import Image, ImageOps, ImageTk, ImageFilter
+from PIL import Image, ImageOps, ImageTk, ImageFilter, ImageEnhance
 from tkinter import ttk
 from io import BytesIO
 
@@ -17,6 +17,11 @@ file_path = ""
 original_image = None
 manipulated_image = None
 
+brightness_value = 1.0  # Default brightness value
+contrast_value = 1.0  # Default contrast value
+saturation_value = 1.0  # Default saturation value
+hue_value = 0  # Default hue value
+
 
 def add_image():
     global file_path, original_image, manipulated_image
@@ -31,27 +36,22 @@ def add_image():
     canvas.image = image
     canvas.create_image(0, 0, image=image, anchor="nw")
 
-
 def change_color():
     global pen_color
     pen_color = colorchooser.askcolor(title="Select Pen Color")[1]
 
-
 def change_size(size):
     global pen_size
     pen_size = size
-
 
 def draw(event):
     x1, y1 = (event.x - pen_size), (event.y - pen_size)
     x2, y2 = (event.x + pen_size), (event.y + pen_size)
     canvas.create_oval(x1, y1, x2, y2, fill=pen_color, outline='')
 
-
 def clear_canvas():
     canvas.delete("all")
     canvas.create_image(0, 0, image=canvas.image, anchor="nw")
-
 
 def apply_filter(filter):
     global manipulated_image
@@ -74,6 +74,54 @@ def apply_filter(filter):
     canvas.image = image
     canvas.create_image(0, 0, image=image, anchor="nw")
 
+def change_brightness(value):
+    global brightness_value
+    brightness_value = float(value)
+    apply_adjustments()
+
+def change_contrast(value):
+    global contrast_value
+    contrast_value = float(value)
+    apply_adjustments()
+
+def change_saturation(value):
+    global saturation_value
+    saturation_value = float(value)
+    apply_adjustments()
+
+def change_hue(value):
+    global hue_value
+    hue_value = int(value)
+    apply_adjustments()
+
+def apply_adjustments():
+    global manipulated_image, brightness_value, contrast_value, saturation_value, hue_value
+    image = original_image.copy()
+
+    # Apply brightness adjustment
+    enhancer = ImageEnhance.Brightness(image)
+    image = enhancer.enhance(brightness_value)
+
+    # Apply contrast adjustment
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(contrast_value)
+
+    # Apply saturation adjustment
+    enhancer = ImageEnhance.Color(image)
+    image = enhancer.enhance(saturation_value)
+
+    # Apply hue adjustment
+    image = image.convert('HSV')
+    pixels = image.load()
+    for y in range(image.size[1]):
+        for x in range(image.size[0]):
+            pixels[x, y] = (pixels[x, y][0] + hue_value % 256, pixels[x, y][1], pixels[x, y][2])
+    image = image.convert('RGB')
+
+    manipulated_image = image.copy()
+    image = ImageTk.PhotoImage(manipulated_image)
+    canvas.image = image
+    canvas.create_image(0, 0, image=image, anchor="nw")
 
 def download_image():
     if manipulated_image:
@@ -87,6 +135,7 @@ def download_image():
             resized_image = manipulated_image.resize((original_width*2, original_height*2), Image.LANCZOS)
             resized_image.save(save_path)
 
+# Create GUI Elements
 
 left_frame = tk.Frame(root, width=200, height=600, bg="white")
 left_frame.pack(side="left", fill="y")
@@ -125,6 +174,23 @@ filter_combobox.bind("<<ComboboxSelected>>", lambda event: apply_filter(filter_c
 
 download_button = tk.Button(left_frame, text="Download Image", command=download_image, bg="white")
 download_button.pack(pady=10)
+
+brightness_slider = tk.Scale(left_frame, from_=0.0, to=2.0, resolution=0.01, orient="horizontal", label="Brightness",
+                            command=change_brightness, bg="white")
+brightness_slider.pack(pady=5)
+
+contrast_slider = tk.Scale(left_frame, from_=0.0, to=2.0, resolution=0.01, orient="horizontal", label="Contrast",
+                          command=change_contrast, bg="white")
+contrast_slider.pack(pady=5)
+
+saturation_slider = tk.Scale(left_frame, from_=0.0, to=2.0, resolution=0.01, orient="horizontal", label="Saturation",
+                             command=change_saturation, bg="white")
+saturation_slider.pack(pady=5)
+
+hue_slider = tk.Scale(left_frame, from_=-180, to=180, orient="horizontal", label="Hue",
+                      command=change_hue, bg="white")
+hue_slider.pack(pady=5)
+
 
 canvas.bind("<B1-Motion>", draw)
 
