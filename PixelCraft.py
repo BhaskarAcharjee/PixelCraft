@@ -69,10 +69,51 @@ def apply_filter(filter):
             image = image.filter(ImageFilter.SMOOTH)
         elif filter == "Emboss":
             image = image.filter(ImageFilter.EMBOSS)
+        # Additional filters
+        elif filter == "Sepia":
+            image = apply_sepia_filter(image)
+        elif filter == "Vintage":
+            image = apply_vintage_filter(image)
+        elif filter == "Grayscale":
+            image = apply_grayscale_filter(image)
         manipulated_image = image.copy()
     image = ImageTk.PhotoImage(manipulated_image)
     canvas.image = image
     canvas.create_image(0, 0, image=image, anchor="nw")
+
+
+def apply_sepia_filter(image):
+    # Apply sepia filter
+    sepia_image = image.convert('RGB')
+    sepia_pixels = sepia_image.load()
+    for y in range(sepia_image.size[1]):
+        for x in range(sepia_image.size[0]):
+            r, g, b = sepia_pixels[x, y]
+            tr = int(r * 0.393 + g * 0.769 + b * 0.189)
+            tg = int(r * 0.349 + g * 0.686 + b * 0.168)
+            tb = int(r * 0.272 + g * 0.534 + b * 0.131)
+            sepia_pixels[x, y] = (min(tr, 255), min(tg, 255), min(tb, 255))
+    return sepia_image
+
+
+def apply_vintage_filter(image):
+    # Apply vintage filter
+    vintage_image = image.convert('RGB')
+    vintage_pixels = vintage_image.load()
+    for y in range(vintage_image.size[1]):
+        for x in range(vintage_image.size[0]):
+            r, g, b = vintage_pixels[x, y]
+            tr = int((r * 0.393 + g * 0.769 + b * 0.189) * 1.2)
+            tg = int((r * 0.349 + g * 0.686 + b * 0.168) * 0.9)
+            tb = int((r * 0.272 + g * 0.534 + b * 0.131) * 0.8)
+            vintage_pixels[x, y] = (min(tr, 255), min(tg, 255), min(tb, 255))
+    return vintage_image
+
+
+def apply_grayscale_filter(image):
+    # Apply grayscale filter
+    grayscale_image = ImageOps.grayscale(image)
+    return grayscale_image
 
 def change_brightness(value):
     global brightness_value
@@ -167,7 +208,7 @@ clear_button.pack(pady=10)
 
 filter_label = tk.Label(left_frame, text="Select Filter", bg="white")
 filter_label.pack()
-filter_combobox = ttk.Combobox(left_frame, values=["Original", "Black and White", "Blur", "Emboss", "Sharpen", "Smooth"])
+filter_combobox = ttk.Combobox(left_frame, values=["Original", "Black and White", "Blur", "Emboss", "Sharpen", "Smooth", "Sepia", "Vintage", "Grayscale"])
 filter_combobox.pack()
 
 filter_combobox.bind("<<ComboboxSelected>>", lambda event: apply_filter(filter_combobox.get()))
